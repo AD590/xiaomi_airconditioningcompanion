@@ -478,12 +478,36 @@ class XiaomiAirConditioningCompanion(ClimateEntity):
         await self._send_configuration()
 
     async def async_set_swing_mode(self, swing_mode):
+        """Set new target swing operation."""
+        # _LOGGER.debug("Setting swing mode to %s", swing_mode)
+
+        # 匹配你的自定义 FE 红外码
+        if swing_mode == "on":
+            command = "FE0000000000000000000000000500642289003300A901B9020F138822010001010100000100010000000101000101010100010001000000000100010000000000000101010101010101000000032201000101010000010001000000010100010101010001000100000000010001000000000000010101010101010100000004BD"
+        else:
+            command = "FE0000000000000000000000000500642289003300A901B9020F138822010001010100000100010000000101000101010100010001000000000100010000000000010000000101010100010101032201000101010000010001000000010100010101010001000100000000010001000000000001000000010101010001010104BD"
+
+        # 发送指令
+        await self._try_command(
+            "Sending custom swing mode IR command failed",
+            self._device.send_ir_code,
+            self._air_condition_model,
+            command,
+        )
+
+        # 保存状态并刷新
+        self._swing_mode = swing_mode
+        self.async_write_ha_state()
+        
+    '''    
+    async def async_set_swing_mode(self, swing_mode):
         """Set the swing mode."""
         from miio.airconditioningcompanion import SwingMode
 
         self._swing_mode = SwingMode[swing_mode.title()]
         await self._send_configuration()
-
+    '''
+    
     async def async_set_fan_mode(self, fan_mode):
         """Set the fan mode."""
         from miio.airconditioningcompanion import FanSpeed
@@ -505,24 +529,23 @@ class XiaomiAirConditioningCompanion(ClimateEntity):
             self._hvac_mode = OperationMode(hvac_mode).value
             self._state = True
             await self._send_configuration()
-
+            
     @property
     def swing_mode(self):
         """Return the current swing setting."""
-        return self._swing_mode.name.lower()
+        return getattr(self, "_swing_mode", "off")
 
     @property
     def swing_modes(self):
         """List of available swing modes."""
-        from miio.airconditioningcompanion import SwingMode
-
-        return [mode.name.lower() for mode in SwingMode]
+        return ["on", "off"]
 
     async def _send_configuration(self):
         from miio.airconditioningcompanion import Led
         from miio.airconditioningcompanion import OperationMode as MiioOperationMode
         from miio.airconditioningcompanion import Power
-
+        from miio.airconditioningcompanion import SwingMode
+        
         if self._air_condition_model is not None:
             await self._try_command(
                 "Sending new air conditioner configuration failed.",
@@ -536,7 +559,8 @@ class XiaomiAirConditioningCompanion(ClimateEntity):
                 ),
                 int(self._target_temperature),
                 self._fan_mode,
-                self._swing_mode,
+                SwingMode.Off,
+                # self._swing_mode,
                 Led.Off,
             )
         else:
@@ -571,8 +595,11 @@ class XiaomiAirConditioningCompanion(ClimateEntity):
 
         await self.hass.async_add_executor_job(self._device.learn_stop, slot)
         _LOGGER.error("Timeout. No infrared command captured")
-        self.hass.components.persistent_notification.async_create(
-            "Timeout. No infrared command captured", title="Xiaomi Miio Remote"
+
+        self.hass.async_create_task(
+            self.hass.services.async_call(
+                "persistent_notification", "create", {"message": "Timeout. No infrared command captured", "title": "Xiaomi Miio Remote"}
+            )
         )
 
     async def async_send_command(self, command, **kwargs):
