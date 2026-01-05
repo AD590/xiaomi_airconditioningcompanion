@@ -241,7 +241,7 @@ class XiaomiAirConditioningCompanion(ClimateEntity):
             ATTR_AIR_CONDITION_MODEL: None,
             ATTR_LOAD_POWER: None,
             ATTR_TEMPERATURE: None,
-            ATTR_SWING_MODE: None,
+            ATTR_SWING_MODE: off,
             ATTR_HVAC_MODE: None,
             ATTR_LED: None,
         }
@@ -358,7 +358,7 @@ class XiaomiAirConditioningCompanion(ClimateEntity):
                     ATTR_AIR_CONDITION_MODEL: state.air_condition_model.hex(),
                     ATTR_LOAD_POWER: state.load_power,
                     ATTR_TEMPERATURE: state.target_temperature,
-                    ATTR_SWING_MODE: state.swing_mode.name.lower(),
+                    ATTR_SWING_MODE: self.swing_mode,
                     ATTR_FAN_MODE: state.fan_speed.name.lower(),
                     ATTR_HVAC_MODE: state.mode.name.lower() if self._state else "off",
                     ATTR_LED: state.led,
@@ -373,7 +373,6 @@ class XiaomiAirConditioningCompanion(ClimateEntity):
                 self._state = True
             self._target_temperature = state.target_temperature
             self._fan_mode = state.fan_speed
-            self._swing_mode = state.swing_mode
             if self._air_condition_model is None:
                 self._air_condition_model = state.air_condition_model.hex()
 
