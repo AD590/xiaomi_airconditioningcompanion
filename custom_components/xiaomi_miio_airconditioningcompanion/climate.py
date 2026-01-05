@@ -241,7 +241,7 @@ class XiaomiAirConditioningCompanion(ClimateEntity):
             ATTR_AIR_CONDITION_MODEL: None,
             ATTR_LOAD_POWER: None,
             ATTR_TEMPERATURE: None,
-            ATTR_SWING_MODE: off,
+            ATTR_SWING_MODE: None,
             ATTR_HVAC_MODE: None,
             ATTR_LED: None,
         }
@@ -249,7 +249,7 @@ class XiaomiAirConditioningCompanion(ClimateEntity):
         self._max_temp = max_temp
         self._min_temp = min_temp
         self._current_temperature = None
-        self._swing_mode = None
+        self._swing_mode = "off"
         self._last_on_operation = None
         self._hvac_mode = None
         self._fan_mode = None
